@@ -1188,3 +1188,157 @@ Signup या login के बाद अक्सर "Welcome!" या "Logged i
 flash[:success], flash[:danger], flash[:notice] जैसी keys आम तौर पर इस्तेमाल होती हैं।"
 
 ----------------------------------------------
+Chapter 3 में आपने deployment शुरू तो किया था, लेकिन उस समय आपका app ज़्यादा काम नहीं कर रहा था।
+
+अब signup feature काम कर रहा है, तो deployment को professional-grade बनाने का समय है।
+
+इसका मतलब:
+
+Signup को secure बनाना
+
+Production में user signup के लिए आपको सुरक्षा (जैसे SSL/HTTPS, secure password handling) बढ़ानी होगी।
+
+Default webserver बदलना
+
+Rails development server (WEBrick/Puma default) production के लिए ठीक नहीं है।
+
+Production में ज़्यादातर लोग Nginx + Puma/Passenger जैसे servers का इस्तेमाल करते हैं।
+
+Production database की configuration
+
+Development में SQLite या local DB इस्तेमाल किया, लेकिन production में PostgreSQL जैसी database configure करनी होगी।
+
+Important Note (merge करने की बात):
+
+Deployment से पहले आपको अपनी सभी changes (जो आपने signup feature के लिए बनाए) master branch (main branch) में merge करनी चाहिए।
+क्योंकि production server हमेशा master/main branch से code खींचता है।
+
+👉 आसान शब्दों में:
+अब आपका signup feature ready है → deployment को सुरक्षित और professional बनाना है → इसके लिए database, webserver, और configuration तैयार करनी है → और सबसे पहले अपने changes को master/main branch में merge करना है ताकि production पर push किया जा सके।
+
+
+----------------------------------------------
+
+
+⚠️ Problem (समस्या)
+
+जब कोई user signup form भरता है, तो उसका name, email और password नेटवर्क पर भेजा जाता है।
+अगर ये data encrypt (सुरक्षित) नहीं किया गया, तो कोई भी malicious user (हैकर) उसे बीच रास्ते में पकड़ सकता है।
+👉 यही एक security flaw है।
+
+🔑 Solution (समाधान: SSL)
+
+SSL (Secure Sockets Layer) data को encrypt करता है, ताकि भेजे जाने के दौरान कोई भी उसे चोरी न कर सके।
+
+इसे आम तौर पर site-wide (पूरी site पर) enable करना बेहतर होता है।
+
+Signup सुरक्षित होगा।
+
+Login (Chapter 8) भी सुरक्षित होगा।
+
+Session hijacking जैसी vulnerabilities (Chapter 9.1) से बचाव होगा।
+
+💡 Heroku और SSL
+
+Heroku पर आपकी Rails app default रूप से SSL support करती है (यानि https URL उपलब्ध रहता है)।
+
+लेकिन, Heroku अपने आप users को http → https redirect नहीं करता।
+👉 अगर कोई user URL manually बदलकर http डाल दे, तो site insecure हो जाएगी।
+
+✅ Fix (Rails में SSL force करना)
+
+Rails production configuration में बस एक line enable करनी होती है:
+
+फ़ाइल: config/environments/production.rb
+
+config.force_ssl = true
+
+
+By default यह line comment की हुई होती है (# के साथ)।
+
+आपको बस इसे uncomment करना है।
+
+🛠️ Effect (क्या होगा?)
+
+अब कोई भी user अगर http://yourapp.com खोलेगा → Rails automatically उसे https://yourapp.com
+ पर redirect कर देगा।
+
+पूरा traffic encrypted होगा → data सुरक्षित रहेगा।
+
+👉 आसान शब्दों में: SSL = आपकी app का seatbelt। बिना इसके user data कभी भी चोरी हो सकता है।
+
+
+
+----------------------------------------------
+
+
+🔴 Problem (समस्या)
+
+Rails में by default WEBrick webserver आता है।
+
+WEBrick:
+
+Ruby में लिखा गया है।
+
+Development और testing के लिए अच्छा है।
+
+लेकिन production में बहुत ज्यादा traffic handle नहीं कर सकता।
+👉 इसलिए production deployment के लिए WEBrick सही नहीं है।
+
+🟢 Solution (समाधान: Puma webserver)
+
+Puma एक high-performance, multithreaded webserver है।
+
+यह बड़ी संख्या में requests को एक साथ handle कर सकता है।
+
+Heroku officially recommend करता है कि आप production में Puma इस्तेमाल करें।
+
+✅ Implementation Steps
+1. Puma Gem
+
+Rails 5 से Puma पहले से Gemfile में शामिल होता है।
+👉 मतलब आपको अलग से install नहीं करना पड़ेगा।
+
+2. Puma configuration (config/puma.rb)
+
+Default file को Heroku docs के हिसाब से replace करें।
+
+फ़ाइल: config/puma.rb
+
+# Puma configuration file.
+
+max_threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
+min_threads_count = ENV.fetch("RAILS_MIN_THREADS") { max_threads_count }
+threads min_threads_count, max_threads_count
+
+port        ENV.fetch("PORT") { 3000 }
+environment ENV.fetch("RAILS_ENV") { ENV['RACK_ENV'] || "development" }
+pidfile ENV.fetch("PIDFILE") { "tmp/pids/server.pid" }
+
+workers ENV.fetch("WEB_CONCURRENCY") { 2 }
+
+preload_app!
+
+plugin :tmp_restart
+
+3. Procfile बनाना
+
+Heroku को बताना होता है कि कौन सा process run करना है। इसके लिए हम Procfile बनाते हैं।
+
+फ़ाइल: Procfile (root directory में, Gemfile के साथ)
+
+web: bundle exec puma -C config/puma.rb
+
+🔧 What happens after this?
+
+जब आप Heroku पर deploy करेंगे → Heroku Procfile पढ़ेगा → Puma को production server के रूप में start करेगा।
+
+अब आपका app production traffic (कई users) को efficiently handle कर सकेगा।
+
+👉 आसान शब्दों में:
+WEBrick = एक साधारण Rickshaw 🚲
+Puma = एक तेज़, powerful कार 🚗
+Production में Rickshaw fail हो जाएगा, लेकिन Puma smooth और fast चलेगा।
+----------------------------------------------
+
+
