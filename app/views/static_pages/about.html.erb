@@ -1,0 +1,21 @@
+<%= provide(:title, "About") %>
+<h1>About Page</h1>
+<h2>rails debug(params) - output</h2>
+<% bebug(params) if Rails.env.develpment? %>
+<hr>
+
+<h2>2) YAML format (manual)</h2>
+<pre><%= params.to_yaml %></pre>
+
+<hr>
+
+<h2>3) Ruby hash style (inspect)</h2>
+<pre><%= params.inspect %></pre>
+
+<hr>
+
+<h2>4) Controller and action(clean)</h2>
+<pre>
+Controller: <%= params[:controller] %>
+Action:     <%= params[:action] %>
+</pre>

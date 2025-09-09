@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= full_title(yield(:title)) %></title>
+    <%# yield(:title) pulls the title you set in views via <% provide(:title, "Page") %> 
+        <%# full_title is a helper in app/helpers/application_helper.rb %>
+
+    <meta charset="utf-8">
+    <%# UTF-8 encoding for full character support %>
+
+    <%= csrf_meta_tags %>
+    <%# Protects against CSRF attacks %>
+
+    <%= csp_meta_tag %>
+    <%# Adds Content Security Policy headers to block malicious scripts %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload", media: "all" %>
+    <%# Loads app/assets/stylesheets/application.(css|scss) via Propshaft or Sprockets %>
+
+    <%= javascript_importmap_tags %>
+    <%# Loads JavaScript modules defined in config/importmap.rb and app/javascript/application.js %>
+  </head>
+
+  <body>
+    <%= render "layouts/header" %>
+
+    <div class="container">
+      <% flash.each do |message_type, message| %>
+        <div class="alert alert-<%= message_type %>"><%= message %> </div>
+        <% end %>
+      <%= yield %>
+      <%# Page-specific content gets injected here %>
+      <% debug(params) if Rails.env.development? %>
+    </div>
+
+   
+    <%= render "layouts/footer" %>
+  </body>
+</html>
