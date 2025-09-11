@@ -5,3 +5,6 @@
 //= link controllers/index.js
 //= link kitten.jpg
 //= link rails.svg
+//= link @popperjs--core.js
+//= link bootstrap.js
+//= link jquery.js

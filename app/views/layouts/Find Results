@@ -1,0 +1,162 @@
+Searching 146 files for "login_path"
+
+~/Desktop/rails/sample_app/app/views/sessions/new.html.erb:
+    4  <div class="row">
+    5  	<div class="col-md-6 col-md-offset-3">
+    6: 		<%= form_with(url: login_path, scope: :session, local: true) do |f| %>
+    7  			<%= f.label :email %>
+    8  			<%= f.email_field :email, class: "form-control" %>
+
+~/Desktop/rails/sample_app/test/controllers/sessions_controller_test.rb:
+    3  class SessionsControllerTest < ActionDispatch::IntegrationTest
+    4    test "should get new" do
+    5:     get login_path
+    6      assert_response :success
+    7    end
+
+2 matches across 2 files
+
+
+
+
+
+
+
+
+Searching 146 files for "login"
+
+~/Desktop/rails/sample_app/practice.rb:
+  489  
+  490  # Benefits
+  491: #1 Fast lookup → login के समय user को email से जल्दी find किया जा सकेगा।
+  492  #2 Uniqueness guarantee → duplicate email database में enter नहीं हो पाएगा।
+  493  #3 Scalability → बड़े userbase (हजारों या लाखों users) पर भी performance सही रहेगा।
+  ...
+  543  
+  544  
+  545: # इससे login system बनाना बहुत आसान हो जाता है।
+  546  
+  547  # Summary
+  ...
+ 1184  flash Rails का तरीका है temporary messages दिखाने का।
+ 1185  
+ 1186: Signup या login के बाद अक्सर "Welcome!" या "Logged in successfully!" जैसे messages इसी से आते हैं।
+ 1187  
+ 1188  flash[:success], flash[:danger], flash[:notice] जैसी keys आम तौर पर इस्तेमाल होती हैं।"
+ ....
+ 1235  Signup सुरक्षित होगा।
+ 1236  
+ 1237: Login (Chapter 8) भी सुरक्षित होगा।
+ 1238  
+ 1239  Session hijacking जैसी vulnerabilities (Chapter 9.1) से बचाव होगा।
+ ....
+ 1344  # वेब ऐप में session (लॉगिन स्टेट) को RESTful resource की तरह ट्रीट करना सबसे आसान तरीका है।
+ 1345  
+ 1346: # जब हम login page पर जाते हैं → यह एक form render करेगा (यानी नया session बनाने की तैयारी)।
+ 1347  
+ 1348: # जब कोई login करता है → तो असल में एक session create होता है।
+ 1349  
+ 1350  # जब कोई logout करता है → तो वह session destroy कर दिया जाता है।
+ ....
+ 1355  
+ 1356  # जबकि Sessions resource किसी database पर आधारित नहीं होता → यह cookies का इस्तेमाल करता है।
+ 1357: # 👉 इसी cookie-based authentication system को बनाना login का असली काम है।
+ 1358  
+ 1359  # इसलिए इस सेक्शन और अगले सेक्शन में हम तैयारी करेंगे:
+ ....
+ 1361  # एक Sessions controller बनाएँगे।
+ 1362  
+ 1363: # एक login form बनाएँगे।
+ 1364  
+ 1365  और ज़रूरी controller actions जोड़ेंगे।
+ ....
+ 1372  # काम: लॉगिन फॉर्म दिखाना
+ 1373  
+ 1374: # REST mapping: GET /login
+ 1375  
+ 1376  # Example: sessions#new
+ ....
+ 1380  # काम: जब यूज़र लॉगिन फॉर्म सबमिट करता है → session बनाना (लॉगिन करना)
+ 1381  
+ 1382: # REST mapping: POST /login
+ 1383  
+ 1384  # Example: sessions#create
+ ....
+ 1394  # 👉 यही reason है कि लॉगिन/लॉगआउट को हम RESTful resource की तरह ट्रीट करते हैं।
+ 1395  
+ 1396: # GET = नया login फॉर्म
+ 1397  
+ 1398: # POST = login करना (session बनाना)
+ 1399  
+ 1400  # DELETE = logout करना (session हटाना)
+ ....
+ 1406  # SessionsController में new action →
+ 1407  
+ 1408: # यह view generate करता है (यानी login form)।
+ 1409  
+ 1410  # जबकि create और destroy का अपना view नहीं होता (क्योंकि वो बस session बनाते या मिटाते हैं), इसलिए उनके लिए अलग view की ज़रूरत नहीं है।
+ ....
+ 1418  # हमें सिर्फ़ चाहिए:
+ 1419  
+ 1420: # GET /login → login form (sessions#new)
+ 1421  
+ 1422: # POST /login → login करना (sessions#create)
+ 1423  
+ 1424  # DELETE /logout → logout करना (sessions#destroy)
+ ....
+ 1431  # Rails.application.routes.draw do
+ 1432  #   root   "static_pages#home"
+ 1433: #   get    "/login",  to: "sessions#new"
+ 1434: #   post   "/login",  to: "sessions#create"
+ 1435  #   delete "/logout", to: "sessions#destroy"
+ 1436    
+
+~/Desktop/rails/sample_app/app/views/sessions/new.html.erb:
+    4  <div class="row">
+    5  	<div class="col-md-6 col-md-offset-3">
+    6: 		<%= form_with(url: login_path, scope: :session, local: true) do |f| %>
+    7  			<%= f.label :email %>
+    8  			<%= f.email_field :email, class: "form-control" %>
+
+~/Desktop/rails/sample_app/config/routes.rb:
+   31    get "/signup", to: "users#new"
+   32  
+   33:   get "/login", to: "sessions#new"
+   34:   post "/login", to: "sessions#create"
+   35    delete "/logout", to: "sessions#destroy"
+   36:   # these 3 routes for sessions , get for login form, post for login done, delete for destroy session.
+   37    resources :users
+   38  
+
+~/Desktop/rails/sample_app/test/controllers/sessions_controller_test.rb:
+    3  class SessionsControllerTest < ActionDispatch::IntegrationTest
+    4    test "should get new" do
+    5:     get login_path
+    6      assert_response :success
+    7    end
+
+25 matches across 4 files
+
+
+Searching 371 files for "user.id"
+
+~/Desktop/rails/sample_app/practice.rb:
+ 1662    # 1. Logs in the given user
+ 1663    def log_in(user)
+ 1664:     session[:user_id] = user.id
+ 1665    end
+ 1666  
+
+~/Desktop/rails/sample_app/app/helpers/sessions_helper.rb:
+    1  module SessionsHelper
+    2  	def log_in(user)
+    3: 		session[:user_id] = user.id
+    4  	end
+    5  
+    6  	def current_user
+    7  		if session[:user_id]
+    8: 			@current_user ||= User.find_by(id:session[:user_id])
+    9  		end
+   10  	end
+
+3 matches across 2 files

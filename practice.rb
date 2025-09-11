@@ -1341,4 +1341,563 @@ Puma = एक तेज़, powerful कार 🚗
 Production में Rickshaw fail हो जाएगा, लेकिन Puma smooth और fast चलेगा।
 ----------------------------------------------
 
+# वेब ऐप में session (लॉगिन स्टेट) को RESTful resource की तरह ट्रीट करना सबसे आसान तरीका है।
 
+# जब हम login page पर जाते हैं → यह एक form render करेगा (यानी नया session बनाने की तैयारी)।
+
+# जब कोई login करता है → तो असल में एक session create होता है।
+
+# जब कोई logout करता है → तो वह session destroy कर दिया जाता है।
+
+# लेकिन यहाँ एक फर्क है:
+
+# Users resource में data को स्टोर करने के लिए database + User model का इस्तेमाल होता है।
+
+# जबकि Sessions resource किसी database पर आधारित नहीं होता → यह cookies का इस्तेमाल करता है।
+# 👉 इसी cookie-based authentication system को बनाना login का असली काम है।
+
+# इसलिए इस सेक्शन और अगले सेक्शन में हम तैयारी करेंगे:
+
+# एक Sessions controller बनाएँगे।
+
+# एक login form बनाएँगे।
+
+और ज़रूरी controller actions जोड़ेंगे।
+
+----------------------------------------------
+# Rails में हम SessionsController बनाएँगे और उसमें ये actions होंगे:
+
+# new action →
+
+# काम: लॉगिन फॉर्म दिखाना
+
+# REST mapping: GET /login
+
+# Example: sessions#new
+
+# create action →
+
+# काम: जब यूज़र लॉगिन फॉर्म सबमिट करता है → session बनाना (लॉगिन करना)
+
+# REST mapping: POST /login
+
+# Example: sessions#create
+
+# destroy action →
+
+# काम: जब यूज़र लॉगआउट करता है → session मिटाना (लॉगआउट करना)
+
+# REST mapping: DELETE /logout
+
+# Example: sessions#destroy
+
+# 👉 यही reason है कि लॉगिन/लॉगआउट को हम RESTful resource की तरह ट्रीट करते हैं।
+
+# GET = नया login फॉर्म
+
+# POST = login करना (session बनाना)
+
+# DELETE = logout करना (session हटाना)
+
+
+----------------------------------------------
+# यहाँ दो बातें साफ़ बताई गई हैं:
+
+# SessionsController में new action →
+
+# यह view generate करता है (यानी login form)।
+
+# जबकि create और destroy का अपना view नहीं होता (क्योंकि वो बस session बनाते या मिटाते हैं), इसलिए उनके लिए अलग view की ज़रूरत नहीं है।
+
+# Routes setup →
+
+# Users resource के लिए हमने पहले resources :users का इस्तेमाल किया था, जिससे सारे RESTful routes (index, show, new, create, edit, update, destroy) अपने आप बन जाते थे।
+
+# लेकिन Sessions resource के लिए हमें इतना बड़ा सेटअप नहीं चाहिए।
+
+# हमें सिर्फ़ चाहिए:
+
+# GET /login → login form (sessions#new)
+
+# POST /login → login करना (sessions#create)
+
+# DELETE /logout → logout करना (sessions#destroy)
+
+# 👉 इसलिए हम resources :sessions की बजाय named routes बनाएँगे।
+
+# Rails में इसका code (Listing 8.2 जैसा) कुछ ऐसा होगा:
+
+# # config/routes.rb
+# Rails.application.routes.draw do
+#   root   "static_pages#home"
+#   get    "/login",  to: "sessions#new"
+#   post   "/login",  to: "sessions#create"
+#   delete "/logout", to: "sessions#destroy"
+  
+#   resources :users
+# end
+
+
+# 🔎 ध्यान दो:
+
+# यहाँ हमने resources :sessions का इस्तेमाल नहीं किया।
+
+# बल्कि सीधे named routes (get, post, delete) define किए।
+
+# और अगर rails generate controller Sessions new से कुछ extra routes आए थे (जैसे sessions/index वगैरह), तो हम उन्हें हटा देंगे।
+
+
+----------------------------------------------
+
+
+यहाँ author पहले invalid input वाले case से शुरुआत कर रहे हैं (ठीक signup की तरह)।
+मतलब, जब कोई user गलत email/password डालता है तो हमें helpful error दिखाना है (Figure 8.2 जैसा)।
+
+Step 1: Minimal SessionsController
+
+Listing 8.6 के हिसाब से शुरुआत में controller कुछ ऐसा होगा:
+
+# app/controllers/sessions_controller.rb
+class SessionsController < ApplicationController
+
+  def new
+  end
+
+  def create
+    render 'new'   # अभी बस दुबारा login form दिखा दो
+  end
+
+  def destroy
+  end
+end
+
+
+👉 अभी का create action कुछ नहीं कर रहा, बस हर बार login form दुबारा दिखा रहा है।
+इससे फायदा ये है कि हम form submit करने का पूरा cycle test कर सकते हैं:
+
+/login form open करो (new action)
+
+email/password डालकर submit करो (POST /login)
+
+request जाएगी sessions#create में
+
+वहाँ से render 'new' → login page फिर दिख जाएगा (Figure 8.4 और 8.5 जैसा)।
+
+Step 2: Foundation for real login
+
+अभी ये सिर्फ़ skeleton है।
+
+Next step में हम actual logic डालेंगे:
+
+User को email से find करना।
+
+Password check करना (user.authenticate(...))।
+
+अगर valid नहीं → flash.now[:danger] + render 'new'।
+
+अगर valid है → आगे Section 8.2 में login process।
+
+📌 Summary:
+
+Signup (users#create) की तरह login (sessions#create) भी invalid case से शुरू होता है।
+
+अभी minimal code है (हर submission → दुबारा login form)।
+
+आगे हम इसे smart बनाएँगे (flash error + actual authentication)।
+
+
+----------------------------------------------
+
+अब तक हमने minimal create action देखा था, जो बस हर बार login form वापस render कर देता था।
+अब असली काम शुरू होता है: email और password के आधार पर user को authenticate करना।
+
+Rails में हमारे पास पहले से ये tools हैं:
+
+User.find_by(email: ...)
+
+Active Record का method → database से user खोजने के लिए।
+
+has_secure_password (जो User model में है)
+
+यह authenticate(password) method देता है।
+
+अगर password सही है → user object return करता है।
+
+अगर password गलत है → false return करता है।
+
+Strategy (Listing 8.7 जैसा)
+def create
+  user = User.find_by(email: params[:session][:email].downcase)
+  if user && user.authenticate(params[:session][:password])
+    # ✅ Login success (हम आगे Section 8.2 में पूरा करेंगे)
+  else
+    # ❌ Login failed
+    flash.now[:danger] = 'Invalid email/password combination'
+    render 'new'
+  end
+end
+
+Flow:
+
+Form submit होने पर params[:session][:email] और params[:session][:password] मिलते हैं।
+
+{ session: { email: "foo@bar.com", password: "password" } }
+
+
+User.find_by से database में user खोजा जाता है।
+
+फिर user.authenticate(password) से password check होता है।
+
+अगर सही → login success (session में user info डालेंगे, बाद में Section 8.2)।
+
+अगर गलत → flash error दिखेगा और login form दुबारा render होगा।
+
+📌 तो अभी तक हमने invalid login case handle करना सीख लिया।
+Next step में हम success case (user को login करके session में याद रखना) implement करेंगे।
+
+
+----------------------------------------------
+
+Signup case (Chapter 7, Section 7.3.3):
+
+Errors Active Record model (@user.errors.full_messages) से आते थे।
+
+क्योंकि User एक database-backed model है, validations के साथ।
+
+Login case (Chapter 8):
+
+Session कोई Active Record model नहीं है।
+
+इसलिए @session.errors जैसी चीज़ available ही नहीं।
+
+यहाँ हमें flash messages का इस्तेमाल करना होगा।
+
+Listing 8.8 (पहला प्रयास, थोड़ा गलत)
+def create
+  user = User.find_by(email: params[:session][:email].downcase)
+  if user && user.authenticate(params[:session][:password])
+    # login success (implement later)
+  else
+    flash[:danger] = 'Invalid email/password combination'
+    render 'new'
+  end
+end
+
+यहाँ गलती कहाँ है?
+
+हम flash[:danger] use कर रहे हैं बजाय flash.now[:danger] के।
+
+फर्क:
+
+flash → message अगली request तक रहता है (redirect होने पर भी)।
+
+flash.now → message सिर्फ़ उसी request पर रहता है (render करने पर)।
+
+👉 इस case में हम render 'new' कर रहे हैं (redirect नहीं),
+तो message को current request तक ही रखना चाहिए।
+अगर flash इस्तेमाल करेंगे तो message next request तक भी बना रहेगा, जो गलत है।
+
+सही version (fix in Listing 8.9)
+flash.now[:danger] = 'Invalid email/password combination'
+render 'new'
+
+
+📌 Summary:
+
+Signup errors → model errors से आते हैं।
+
+Login errors → Active Record object नहीं है, इसलिए flash.now से दिखाते हैं।
+
+flash vs flash.now का फर्क समझना critical है।
+
+----------------------------------------------
+1. Problem
+
+अब जब हम sessions implement कर रहे हैं (login/logout system), तो हमें कई related functions की ज़रूरत होगी, जैसे:
+
+log_in(user) → किसी user को login करना
+
+current_user → पता लगाना कि अभी कौन user login है
+
+logged_in? → check करना कि user login है या नहीं
+
+log_out → logout करना
+
+ये सारे methods हमें कई जगह चाहिए होंगे:
+
+controllers (e.g., SessionsController, UsersController)
+
+views (header navbar, profile links, etc.)
+
+2. Ruby Modules for Reuse
+
+Ruby में module एक तरीका है reusable functions को एक जगह रखने का।
+Rails में हर controller के लिए एक helper module अपने-आप generate होता है।
+
+जब हमने SessionsController generate किया था, तो साथ ही app/helpers/sessions_helper.rb भी बना था।
+👉 हम इसी file में login-related methods रख सकते हैं।
+
+3. Availability in Views & Controllers
+
+Rails automatically includes helpers in views.
+मतलब: अगर SessionsHelper में कोई method है, तो आप उसे view files (.html.erb) में सीधा use कर सकते हो।
+
+लेकिन हमें यह methods controllers में भी चाहिए।
+इसके लिए हम ApplicationController (जो सारे controllers का parent है) में helper को include करेंगे।
+
+# app/controllers/application_controller.rb
+class ApplicationController < ActionController::Base
+  include SessionsHelper
+end
+
+
+इससे:
+✅ SessionsHelper methods अब सभी controllers और सभी views में available हो जाएंगे।
+
+4. Example Flow
+
+अब हम SessionsHelper में methods define कर सकते हैं:
+
+module SessionsHelper
+  # 1. Logs in the given user
+  def log_in(user)
+    session[:user_id] = user.id
+  end
+
+  # 2. Returns the current logged-in user (if any).
+  def current_user
+    @current_user ||= User.find_by(id: session[:user_id])
+  end
+
+  # 3. Returns true if the user is logged in, false otherwise.
+  def logged_in?
+    !current_user.nil?
+  end
+
+  # 4. Logs out the current user
+  def log_out
+    session.delete(:user_id)
+    @current_user = nil
+  end
+end
+
+
+📌 Summary
+
+Sessions system को DRY और reusable बनाने के लिए हम SessionsHelper module का इस्तेमाल करते हैं।
+
+इसे ApplicationController में include करने से हर controller और हर view में methods available रहते हैं।
+
+अब हम आसानी से login/logout helpers बना सकते हैं।
+----------------------------------------------
+
+
+||= (“or equals”)
+
+
+
+----------------------------------------------
+हमने हाथ से चेक कर लिया कि login/logout सही काम कर रहा है। अब हमें एक integration test लिखना है ताकि ये behavior बार-बार अपने आप टेस्ट हो सके और अगर आगे कोड में कुछ बदल गया तो तुरंत गलती पकड़ में आ जाए।
+
+टेस्ट में हम ये पाँच स्टेप्स चेक करेंगे:
+
+Login पेज विज़िट करना।
+
+Valid जानकारी (email + password) भेजना।
+
+Login लिंक गायब होना।
+
+Logout लिंक आना।
+
+Profile लिंक आना।
+
+📌 Fixture क्यों ज़रूरी है?
+
+Integration टेस्ट तभी काम करेगा जब database में पहले से एक valid user मौजूद हो।
+
+Rails में इसके लिए हम fixtures यूज़ करते हैं।
+
+Fixture basically एक YAML फाइल होती है (जैसे test/fixtures/users.yml) जिसमें dummy users के data होते हैं।
+
+जब टेस्ट रन होता है, तो ये data test database में load हो जाता है।
+
+📌 User के लिए fixture कैसे बनाएँ?
+
+User model में has_secure_password है, यानी password को सीधे store नहीं किया जाता बल्कि उसका digest (bcrypt hash) रखा जाता है।
+तो fixture file में हमें user के लिए password_digest लिखना होगा।
+
+इसके लिए हम User.digest नाम का एक method बनाएँगे (User model में)।
+ये method plain text password को bcrypt digest में बदल देगा।
+
+📌 Example – users.yml fixture
+michael:
+  name: Michael Example
+  email: michael@example.com
+  password_digest: <%= User.digest('password') %>
+
+
+इसका मतलब:
+
+User का नाम Michael Example
+
+Email michael@example.com
+
+Password "password" (लेकिन DB में bcrypt hash store होगा)
+
+📌 क्यों digest method बनाना ज़रूरी है?
+
+क्योंकि अगर हम सीधे "password" fixture में डालेंगे, तो Rails उसे पहचान नहीं पाएगा।
+हमें वही bcrypt hash चाहिए जो has_secure_password बनाता है।
+इसलिए model में helper method User.digest बनाया जाता है ताकि fixtures भी secure रहें।
+
+👉 यानी:
+
+हम fixture में user डालेंगे (with password_digest)।
+
+Test में login करते समय "password" देंगे।
+
+Rails bcrypt के ज़रिए "password" को match करेगा और login हो जाएगा।
+
+क्या आप चाहोगे कि मैं तुम्हें वो User.digest method भी दिखा दूँ जो model (user.rb) में डालना पड़ेगा?
+
+You said:
+SURE
+ChatGPT said:
+
+बिलकुल 👍
+
+Rails Tutorial में user fixtures को काम करने लायक बनाने के लिए User.digest नाम का class method यूज़र मॉडल (app/models/user.rb) में define किया जाता है।
+
+📌 Code – user.rb
+class User < ApplicationRecord
+  has_secure_password
+
+  # Returns the hash digest of the given string.
+  def self.digest(string)
+    cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST :
+                                                  BCrypt::Engine.cost
+    BCrypt::Password.create(string, cost: cost)
+  end
+end
+
+📌 Explanation in Hindi
+
+has_secure_password
+
+ये bcrypt के साथ काम करता है और automatically password_digest कॉलम को handle करता है।
+
+self.digest(string) method
+
+ये method किसी भी plain text string (जैसे "password") को bcrypt hash में बदल देता है।
+
+cost variable password hashing की "complexity" बताता है।
+
+Test environment में low cost यूज़ होती है (fast tests के लिए)।
+
+Production में high cost यूज़ होती है (ज़्यादा secure hashing के लिए)।
+
+BCrypt::Password.create(string, cost: cost)
+
+Plain text password से secure digest (hash) बनाता है।
+
+📌 Fixture Example (test/fixtures/users.yml)
+michael:
+  name: Michael Example
+  email: michael@example.com
+  password_digest: <%= User.digest('password') %>
+
+
+👉 अब जब टेस्ट चलेगा:
+
+Rails इस user को load करेगा।
+
+Login form में अगर "password" डालते हो, तो वो bcrypt hash से match होगा।
+
+----------------------------------------------
+तुम्हारे integration test में ये assertions आते हैं 👇
+
+1. assert_difference 'User.count', 1 do ... end
+
+यह check करता है कि block के अंदर run होने पर User.count में 1 की बढ़त होनी चाहिए।
+
+यानी signup form submit करने के बाद database में नया user create हुआ है।
+
+अगर user create नहीं होता (validation fail आदि), तो यह test fail हो जाएगा।
+
+📌 Example:
+
+assert_difference 'User.count', 1 do
+  post users_path, params: { user: { ... } }
+end
+
+2. assert_redirected_to @user
+
+यह verify करता है कि controller action (जैसे signup या login के बाद) redirect हुआ है expected path पर।
+
+Example: signup के बाद user को उसके profile page (user_path(@user)) पर redirect करना चाहिए।
+
+📌 Example:
+
+assert_redirected_to @user
+
+3. follow_redirect!
+
+Rails test में जब कोई action redirect करता है, तो request वहीं रुक जाती है।
+
+follow_redirect! बोलता है → उस redirect को follow करो और final response load करो।
+
+Example: signup के बाद /users/:id पर redirect हुआ तो यह call करके हम उस page का response check कर सकते हैं।
+
+4. assert_template 'users/show'
+
+यह confirm करता है कि rendered template सही है।
+
+Example: signup के बाद user का profile page (users/show.html.erb) render होना चाहिए।
+
+5. assert_select "a[href=?]", login_path, count: 0
+
+यह HTML response check करता है।
+
+assert_select का मतलब → rendered page में दिए गए CSS selector या tag exist करना चाहिए।
+
+"a[href=?]" → <a href="/login"> link।
+
+count: 0 → यह link बिल्कुल भी मौजूद नहीं होना चाहिए (क्योंकि logged in user के लिए login link दिखना नहीं चाहिए)।
+
+6. assert_select "a[href=?]", logout_path
+
+यह check करता है कि page में logout link मौजूद है।
+
+मतलब user logged in है तो navbar में "Log out" button आना चाहिए।
+
+7. assert_select "a[href=?]", user_path(@user)
+
+यह check करता है कि navbar में current user का profile link मौजूद है।
+
+यानी logged in होने के बाद user profile page का direct link आना चाहिए।
+
+8. assert is_logged_in?
+
+यह हमारे custom test helper (जो test_helper.rb में define किया) को call करता है।
+
+यह confirm करता है कि session[:user_id] nil नहीं है → यानी user login state में है।
+
+📌 Example:
+
+assert is_logged_in?
+
+🔑 Summary (साधारण भाषा में)
+
+assert_difference → user create हुआ
+
+assert_redirected_to → सही जगह redirect हुआ
+
+follow_redirect! → redirect के बाद final page load करो
+
+assert_template → सही view render हुआ
+
+assert_select → HTML page में सही links मौजूद/नहीं मौजूद हैं
+
+assert is_logged_in? → session में user id है → user logged in है
+
+----------------------------------------------
