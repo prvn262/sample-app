@@ -1901,3 +1901,102 @@ assert_select → HTML page में सही links मौजूद/नही�
 assert is_logged_in? → session में user id है → user logged in है
 
 ----------------------------------------------
+Nice 👍 ये तुम्हारा Chapter Summary है (Rails Tutorial – Basic Login).
+चलो इसे एक-एक करके clear करें:
+
+📚 What we learned in this chapter
+
+Rails can maintain state from one page to the next using temporary cookies via the session method.
+
+Rails में session[:user_id] temporary cookie में save होता है।
+
+Browser close करने पर यह auto-expire हो जाता है।
+
+The login form is designed to create a new session to log a user in.
+
+Login form → email और password लेता है → SessionsController के create action को call करता है।
+
+Successful login होने पर → session[:user_id] = user.id set कर देता है।
+
+The flash.now method is used for flash messages on rendered pages.
+
+अगर हम सिर्फ render कर रहे हैं (redirect नहीं), तो flash.now use करना पड़ता है।
+
+Example: Invalid login attempt → flash.now[:danger] = "Invalid email/password"
+
+Test-driven development is useful when debugging by reproducing the bug in a test.
+
+पहले test लिखो (जो fail होगा = red), फिर code fix करो जब तक test pass न हो (green)।
+
+इससे future में bug वापस न आए।
+
+Using the session method, we can securely place a user id on the browser to create a temporary session.
+
+Rails session auto-encrypted है।
+
+Attacker cookie को modify नहीं कर सकता और किसी और user का id use नहीं कर सकता।
+
+We can change features such as links on the layouts based on login status.
+
+अगर logged_in? true है → “Profile”, “Logout” दिखाओ।
+
+अगर false है → “Login” दिखाओ।
+
+Layout dynamically update होता है।
+
+Integration tests can verify correct routes, database updates, and proper changes to the layout.
+
+Example test:
+
+/login पर जाओ।
+
+Valid credentials दो।
+
+Check करो कि “Login” link गायब है और “Logout” link व “Profile” link दिखाई दे रहे हैं।
+
+👉 इस तरह तुमने सीखा:
+
+Session handling (temporary cookies)
+
+Login / Logout flow
+
+Flash messages
+
+Dynamic navigation links
+
+Test-driven approach
+
+----------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
