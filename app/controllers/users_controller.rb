@@ -3,7 +3,6 @@ class UsersController < BaseController
 
   def index
     @users = User.all
-
   end
 
   def new
@@ -22,8 +21,7 @@ class UsersController < BaseController
   end
 
   def show
-    @user = User.find(params[:id])
-    puts params.to_yaml
+    @user = current_user
   end
 
   private
@@ -32,6 +30,7 @@ class UsersController < BaseController
     params.require(:user).permit(:name, :email, :password, :password_confirmation)
   end
 end
+
 
 
 
