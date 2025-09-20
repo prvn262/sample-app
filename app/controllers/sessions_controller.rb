@@ -8,7 +8,7 @@ class SessionsController < ApplicationController
       # user  && user.authenticate
       log_in user
       params[:session][:remember_me] == "1" ? remember(user) : forget(user)
-      redirect_to user
+      redirect_back_or user
     else
       flash.now[:danger] = "Invalid Email/password combination"
       render "new", status: :unprocessable_entity

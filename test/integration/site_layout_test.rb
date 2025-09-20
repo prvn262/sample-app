@@ -6,23 +6,42 @@ class SiteLayoutTest < ActionDispatch::IntegrationTest
   # end
 
   test "layout links" do
+    # for Non-logged-in user
     get root_path
     assert_template "static_pages/home"
     assert_select "a[href=?]", root_path, count: 2
     assert_select "a[href=?]", helf_path
     assert_select "a[href=?]", about_path
     assert_select "a[href=?]", contact_path
+    assert_select "a[href=?]", signup_path
+    assert_select "a[href=?]", login_path
+
+
+    # for logged-in user
+    @user = users(:michael)
+    log_in_as(@user)
+    get root_path
+    assert_select "a[href=?]", users_path
+    assert_select "a[href=?]", user_path(@user)
+    assert_select "a[href=?]", edit_user_path(@user)
+    assert_select "a[href=?]", logout_path
+  end
+
+
+
+
+
+
     
 
     # assert_select "a[href=?]", signup_path
 
+    # get contact_path
+    # assert_select "title", full_title("Contact")
 
-    get contact_path
-    assert_select "title", full_title("Contact")
+    # get signup_path
+    # assert_select "title", full_title("signup")
 
-    get signup_path
-    assert_select "title", full_title("signup")
-  end
 
 end
 

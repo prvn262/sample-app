@@ -1,9 +1,6 @@
 require "test_helper"
 
 class UsersLoginTest < ActionDispatch::IntegrationTest
-  # test "the truth" do
-  #   assert true
-  # end]
 
   def setup
     @user = users(:michael)
@@ -74,6 +71,25 @@ class UsersLoginTest < ActionDispatch::IntegrationTest
     log_in_as(@user, password: "password", remember_me: "0")
     cookies.delete(:remember_token)
     assert_empty cookies[:remember_token]
+  end
+
+  test "friendly forwarding only works first time" do
+    # user comes at protected page
+    get edit_user_path(@user)
+    # forwarding page saved correctly.
+    assert_equal session[:forwarding_url], "http://www.example.com" + edit_user_path(@user)
+
+    log_in_as(@user)
+    assert_redirected_to edit_user_path(@user)
+    # forwarding_url should be deleted(Nil.)
+    assert_nil session[:forwarding_url]
+
+    # now log out:
+    delete logout_path
+    # login again:
+    log_in_as(@user)
+    # Go by default mostly profile page
+    assert_redirected_to @user
   end
 end
 

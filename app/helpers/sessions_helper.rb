@@ -39,5 +39,41 @@ module SessionsHelper
 		@current_user = nil
 	end
 
+	# Returns true if the given user is the current user.
+  def current_user?(user)
+  	user && user == current_user
+  	# it will check user have current_user, other user or nil, if current user compare with current user.
+  end
 
+  # Stores the URL(orginal url of request) , where you want to go in session:
+  def store_location
+  	session[:forwarding_url] = request.original_url if request.get?
+  end
+
+  # Redirects to stored location (or to the default(mostly PROFILE)).
+  def redirect_back_or(default)
+  	redirect_to(session[:forwarding_url] || default)
+  	session.delete(:forwarding_url)
+  end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
