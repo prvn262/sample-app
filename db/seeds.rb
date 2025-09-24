@@ -8,8 +8,11 @@
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
 
+# Seeds: development users activated
+# Fixtures: test users activated
 
-
+# user = User.find_by(email: "prvn262@gmail.com")
+# user.update(admin: true)
 
 
 # Create a main sample user.
@@ -19,6 +22,8 @@ User.find_or_create_by!(email: "admin@example.com") do |user|
   user.password = "password"
   user.password_confirmation = "password"
   user.admin = true
+  user.activated = true
+  activated_at = Time.zone.now
 end
 
 User.find_or_create_by!(email: "example@railstutorial.org") do |user|
@@ -26,6 +31,8 @@ User.find_or_create_by!(email: "example@railstutorial.org") do |user|
   user.password = "password"
   user.password_confirmation = "password"
   user.admin = false
+  user.activated = true
+  activated_at = Time.zone.now
 end
 
 
@@ -36,5 +43,6 @@ end
   name = Faker::Name.name
   email = "example-#{n+1}@railstutorial.org"
   password = "password"
-  User.create!(name: name, email: email, password: password, password_confirmation: password, admin: false)
+  User.create!(name: name, email: email, password: password, password_confirmation: password,
+              admin: false, activated: true, activated_at: Time.zone.now)
 end
