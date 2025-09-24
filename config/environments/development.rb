@@ -3,6 +3,11 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # To send email, Rails needs to know which host and protocol to use.
+  config.action_mailer.raise_delivery_errors = false
+  host = "localhost:3000" #local server
+  config.action_mailer.default_url_options = { host: host, protocol: "http"}
+
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
 

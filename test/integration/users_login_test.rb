@@ -1,9 +1,6 @@
 require "test_helper"
 
 class UsersLoginTest < ActionDispatch::IntegrationTest
-  # test "the truth" do
-  #   assert true
-  # end]
 
   def setup
     @user = users(:michael)
@@ -43,7 +40,7 @@ class UsersLoginTest < ActionDispatch::IntegrationTest
 
   test "login with valid information followed by logout" do
     get login_path
-    post login_path params: { session: { email: @user.email, password: "password"}}
+    post login_path, params: { session: { email: @user.email, password: "password"}}
     assert is_logged_in?
     assert_redirected_to @user
     follow_redirect!
@@ -54,13 +51,46 @@ class UsersLoginTest < ActionDispatch::IntegrationTest
     delete logout_path
     assert_not is_logged_in?
     assert_redirected_to root_url
+
+    delete logout_path
     follow_redirect!
     assert_select "a[href=?]", login_path
     assert_select "a[href=?]", logout_path, count: 0
     assert_select "a[href=?]", user_path(@user), count: 0
   end
 
+  test "login with remembering" do
+    log_in_as(@user, password: "password", remember_me: "1")
+    assert_not_empty cookies[:remember_token]
+  end
 
+  test "login without remembering" do
+    # Log in to set the cookie.
+    log_in_as(@user, password: "password", remember_me: "1")
+    # Log in again and verify that the cookie is deleted
+    log_in_as(@user, password: "password", remember_me: "0")
+    cookies.delete(:remember_token)
+    assert_empty cookies[:remember_token]
+  end
+
+  test "friendly forwarding only works first time" do
+    # user comes at protected page
+    get edit_user_path(@user)
+    # forwarding page saved correctly.
+    assert_equal session[:forwarding_url], "http://www.example.com" + edit_user_path(@user)
+
+    log_in_as(@user)
+    assert_redirected_to edit_user_path(@user)
+    # forwarding_url should be deleted(Nil.)
+    assert_nil session[:forwarding_url]
+
+    # now log out:
+    delete logout_path
+    # login again:
+    log_in_as(@user)
+    # Go by default mostly profile page
+    assert_redirected_to @user
+  end
 end
 
 
