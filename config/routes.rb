@@ -55,6 +55,14 @@ Rails.application.routes.draw do
 # this creates two named routes, help_path and help_url:
 # help_path -> '/help'
 # help_url -> 'http://www.example.com/help'
+
+
+resources :microposts, only: [:create, :destroy]
+# | URL               | HTTP Request | Action    | Named Route                 |
+# | ----------------- | ------------ | --------- | --------------------------- |
+# | `/microposts`     | **POST**     | `create`  | `microposts_path`           |
+# | `/microposts/:id` | **DELETE**   | `destroy` | `micropost_path(micropost)` |
+
 end
 
 
