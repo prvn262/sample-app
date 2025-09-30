@@ -1,0 +1,11 @@
+<li>
+  <hr>
+  <%= gravatar_for user, size: 50 %>
+  ||| <%= link_to user.name, user, class: "btn btn-sm btn-danger" %>
+  <% if current_user.admin? && current_user != user %>
+    ||| <%= link_to "delete", user, data: { turbo_method: :delete, turbo_confirm: "YOU SURE?"}, class: "btn btn-sm btn-danger" %>
+  <% end %>
+  <hr>
+</li>
+
+
